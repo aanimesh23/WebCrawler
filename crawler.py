@@ -2,6 +2,7 @@ import logging
 import re
 from urllib.parse import urlparse
 from corpus import Corpus
+import lxml.html
 
 logger = logging.getLogger(__name__)
 
@@ -38,7 +39,7 @@ class Crawler:
         :return: a dictionary containing the url, content and the size of the content. If the url does not
         exist in the corpus, a dictionary with content set to None and size set to 0 can be returned.
         """
-        #print(url)
+        print(url)
         url_data = {
             "url": url,
             "content": None,
@@ -46,7 +47,7 @@ class Crawler:
         }
 
         file = self.corpus.get_file_name(url) # Get URL from the corpus
-        #print(file)
+        print(file)
         if file == None:
             return url_data
 
@@ -61,7 +62,7 @@ class Crawler:
             url_data["content"] = content
             url_data['size'] = s
 
-        #print(url_data)
+        print(url_data)
         return url_data
 
     def extract_next_links(self, url_data):
@@ -74,7 +75,13 @@ class Crawler:
 
         Suggested library: lxml
         """
+        
         outputLinks = []
+
+        domain = lxml.html.fromstring(url_data["content"])
+        for l in domain.xpath('//a/@href'):
+            outputLinks.append(l)
+        
         return outputLinks
 
     def is_valid(self, url):
