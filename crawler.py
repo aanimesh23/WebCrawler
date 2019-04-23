@@ -77,10 +77,13 @@ class Crawler:
         """
         
         outputLinks = []
-        
+
         domain = lxml.html.fromstring(url_data["content"])
         for l in domain.xpath('//a/@href'):
-            outputLinks.append(l)
+            for link in l:
+                if ".ics.uci.edu" not in link:
+                    link = "http://www.uci.edu" + link
+                outputLinks.append(link)
 
         return outputLinks
 
