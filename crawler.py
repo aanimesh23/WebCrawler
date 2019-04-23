@@ -38,11 +38,30 @@ class Crawler:
         :return: a dictionary containing the url, content and the size of the content. If the url does not
         exist in the corpus, a dictionary with content set to None and size set to 0 can be returned.
         """
+        #print(url)
         url_data = {
             "url": url,
             "content": None,
             "size": 0
         }
+
+        file = self.corpus.get_file_name(url) # Get URL from the corpus
+        #print(file)
+        if file == None:
+            return url_data
+
+        try:
+            f = open(file) # Open the file to get the content
+        except(Exception):
+            return url_data
+        else:
+            content = f.read()
+            s = len(content)
+            url_data["url"] = file
+            url_data["content"] = content
+            url_data['size'] = s
+
+        #print(url_data)
         return url_data
 
     def extract_next_links(self, url_data):
