@@ -3,6 +3,7 @@ import re
 from urllib.parse import urlparse
 from corpus import Corpus
 import lxml.html
+from bs4 import BeautifulSoup
 
 logger = logging.getLogger(__name__)
 
@@ -27,6 +28,7 @@ class Crawler:
             url_data = self.fetch_url(url)
 
             for next_link in self.extract_next_links(url_data):
+                #print(next_link)
                 if self.corpus.get_file_name(next_link) is not None:
                     if self.is_valid(next_link):
                         self.frontier.add_url(next_link)
@@ -58,7 +60,7 @@ class Crawler:
         else:
             content = f.read()
             s = len(content)
-            url_data["url"] = file
+            url_data["url"] = url
             url_data["content"] = content
             url_data['size'] = s
 
@@ -78,13 +80,40 @@ class Crawler:
         
         outputLinks = []
 
-        domain = lxml.html.fromstring(url_data["content"])
-        for l in domain.xpath('//a/@href'):
-            for link in l:
-                if ".ics.uci.edu" not in link:
-                    link = "http://www.uci.edu" + link
+        soup = BeautifulSoup(url_data["content"], "lxml")
+        tags = soup.find_all('a')
+
+        for tag in tags:
+            link = tag.get('href')
+            if type(link) != type(None):
+                if len(link) > 0 and link[0] == "/":
+                    if link[-1] == "/":
+                        link = url_data["url"] + link[:-1]
+                    else:
+                        link = url_data["url"] + link
+
+                if len(link) > 0 and link[-1] == "/":
+                    link = link[:-1]
+
+                if len(link) > 0 and link[0] != "h":
+                    link = url_data["url"] + "/" + link
+
                 outputLinks.append(link)
 
+
+
+
+        # domain = lxml.html.fromstring(url_data["content"])
+        # for l in domain.xpath('//a/@href'):
+        #     outputLinks.append(l)
+
+        # for link in outputLinks:
+        #     if len(link) > 0 and link[0] == "/":
+        #         #print(link)
+        #         link = "http://www.ics.uci.edu" + link
+        #         outputLinks.append(link)
+        
+        # print(outputLinks)
         return outputLinks
 
     def is_valid(self, url):
@@ -94,6 +123,7 @@ class Crawler:
         in this method
         """
         parsed = urlparse(url)
+        #print(parsed.hostname)
         if parsed.scheme not in set(["http", "https"]):
             return False
         try:
@@ -103,6 +133,7 @@ class Crawler:
                                     + "|ps|eps|tex|ppt|pptx|doc|docx|xls|xlsx|names|data|dat|exe|bz2|tar|msi|bin|7z|psd|dmg|iso|epub|dll|cnf|tgz|sha1" \
                                     + "|thmx|mso|arff|rtf|jar|csv" \
                                     + "|rm|smil|wmv|swf|wma|zip|rar|gz|pdf)$", parsed.path.lower())
+                   #and "calendar" not in parsed.hostname
 
         except TypeError:
             print("TypeError for ", parsed)
