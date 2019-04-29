@@ -86,15 +86,18 @@ class Crawler:
         for tag in tags:
             link = tag.get('href')
             if type(link) != type(None):
+                # if current link is relative then add base url to it (relative = /blah instead of having proper protocol)
                 if len(link) > 0 and link[0] == "/":
                     if link[-1] == "/":
                         link = url_data["url"] + link[:-1]
                     else:
                         link = url_data["url"] + link
 
+                #remove backslash from end of link
                 if len(link) > 0 and link[-1] == "/":
                     link = link[:-1]
 
+                #check for links not starting with http or / then adds base url with additional backslash to link
                 if len(link) > 0 and link[0] != "h":
                     link = url_data["url"] + "/" + link
 
