@@ -4,6 +4,7 @@ from urllib.parse import urlparse
 from urllib.parse import urljoin
 from corpus import Corpus
 import lxml.html
+from collections import Counter
 from bs4 import BeautifulSoup
 
 logger = logging.getLogger(__name__)
@@ -127,6 +128,11 @@ class Crawler:
         filter out crawler traps. Duplicated urls will be taken care of by frontier. You don't need to check for duplication
         in this method
         """
+        splitted = url.split('/')
+        cnt = Counter(splitted)
+        for x in cnt:
+            if cnt[x] > 1:
+                return False
         parsed = urlparse(url)
         #print(parsed)
         if parsed.scheme not in set(["http", "https"]):
@@ -140,7 +146,7 @@ class Crawler:
                                     + "|rm|smil|wmv|swf|wma|zip|rar|gz|pdf)$", parsed.path.lower()) \
                    and parsed.query =='' \
                    and not re.match("^.*?(/.+?/).*?\1.*$|^.*?/(.+?/)\2.*$", url) \
-                   and 'dataset' not in parsed.path.lower() # should not be doing this coz its hard coding.....
+                   and not re.match("^.*calendar.*$", url) 
 
         except TypeError:
             print("TypeError for ", parsed)
