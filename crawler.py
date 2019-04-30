@@ -139,7 +139,8 @@ class Crawler:
                                     + "|thmx|mso|arff|rtf|jar|csv" \
                                     + "|rm|smil|wmv|swf|wma|zip|rar|gz|pdf)$", parsed.path.lower()) \
                    and parsed.query =='' \
-                   and not re.match("^.*?(/.+?/).*?\1.*$|^.*?/(.+?/)\2.*$", url)
+                   and not re.match("^.*?(/.+?/).*?\1.*$|^.*?/(.+?/)\2.*$", url) \
+                   and 'dataset' not in parsed.path.lower() # should not be doing this coz its hard coding.....
 
         except TypeError:
             print("TypeError for ", parsed)
