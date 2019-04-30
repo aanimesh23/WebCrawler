@@ -139,14 +139,15 @@ class Crawler:
             return False
         try:
             return ".ics.uci.edu" in parsed.hostname \
-                   and not re.match(".*\.(css|js|bmp|gif|jpe?g|ico" + "|png|tiff?|mid|mp2|mp3|mp4" \
-                                    + "|wav|avi|mov|mpeg|ram|m4v|mkv|ogg|ogv|pdf" \
-                                    + "|ps|eps|tex|ppt|pptx|doc|docx|xls|xlsx|names|data|dat|exe|bz2|tar|msi|bin|7z|psd|dmg|iso|epub|dll|cnf|tgz|sha1" \
-                                    + "|thmx|mso|arff|rtf|jar|csv" \
-                                    + "|rm|smil|wmv|swf|wma|zip|rar|gz|pdf)$", parsed.path.lower()) \
+                   and not re.match(r".*\.(css|js|bmp|gif|jpe?g|ico" + r"|png|tiff?|mid|mp2|mp3|mp4" \
+                                    + r"|wav|avi|mov|mpeg|ram|m4v|mkv|ogg|ogv|pdf" \
+                                    + r"|ps|eps|tex|ppt|pptx|doc|docx|xls|xlsx|names|data|dat|exe|bz2|tar|msi|bin|7z|psd|dmg|iso|epub|dll|cnf|tgz|sha1" \
+                                    + r"|thmx|mso|arff|rtf|jar|csv" \
+                                    + r"|rm|smil|wmv|swf|wma|zip|rar|gz|pdf)$", parsed.path.lower()) \
                    and parsed.query =='' \
-                   and not re.match("^.*?(/.+?/).*?\1.*$|^.*?/(.+?/)\2.*$", url) \
-                   and not re.match("^.*calendar.*$", url) 
+                   and not re.match(r"^.*?(/.+?/).*?\1.*$|^.*?/(.+?/)\2.*$", url) \
+                   and not re.match(r"^.*(/misc|/sites|/all|/themes|/modules|/profiles|/css|/field|/node|/theme){3}.*$", url) \
+                   and not re.match(r"^.*calendar.*$", url) 
 
         except TypeError:
             print("TypeError for ", parsed)
