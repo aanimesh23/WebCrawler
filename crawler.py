@@ -1,6 +1,7 @@
 import logging
 import re
 from urllib.parse import urlparse
+from urllib.parse import urljoin
 from corpus import Corpus
 import lxml.html
 from bs4 import BeautifulSoup
@@ -88,10 +89,11 @@ class Crawler:
             if type(link) != type(None):
                 # if current link is relative then add base url to it (relative = /blah instead of having proper protocol)
                 if len(link) > 0 and link[0] == "/":
-                    if link[-1] == "/":
-                        link = url_data["url"] + link[:-1]
-                    else:
-                        link = url_data["url"] + link
+                    link = urljoin(url_data["url"], link)
+                    # if link[-1] == "/":
+                    #     link = url_data["url"] + link[:-1]
+                    # else:
+                    #     link = url_data["url"] + link
 
                 #remove backslash from end of link
                 if len(link) > 0 and link[-1] == "/":
@@ -99,7 +101,7 @@ class Crawler:
 
                 #check for links not starting with http or / then adds base url with additional backslash to link
                 if len(link) > 0 and link[0] != "h":
-                    link = url_data["url"] + "/" + link
+                    link = urljoin(url_data["url"], link)
 
                 outputLinks.append(link)
 
@@ -126,7 +128,7 @@ class Crawler:
         in this method
         """
         parsed = urlparse(url)
-        #print(parsed.hostname)
+        #print(parsed)
         if parsed.scheme not in set(["http", "https"]):
             return False
         try:
@@ -135,8 +137,9 @@ class Crawler:
                                     + "|wav|avi|mov|mpeg|ram|m4v|mkv|ogg|ogv|pdf" \
                                     + "|ps|eps|tex|ppt|pptx|doc|docx|xls|xlsx|names|data|dat|exe|bz2|tar|msi|bin|7z|psd|dmg|iso|epub|dll|cnf|tgz|sha1" \
                                     + "|thmx|mso|arff|rtf|jar|csv" \
-                                    + "|rm|smil|wmv|swf|wma|zip|rar|gz|pdf)$", parsed.path.lower())
-                   #and "calendar" not in parsed.hostname
+                                    + "|rm|smil|wmv|swf|wma|zip|rar|gz|pdf)$", parsed.path.lower()) \
+                   and parsed.query =='' \
+                   and not re.match("^.*?(/.+?/).*?\1.*$|^.*?/(.+?/)\2.*$", url)
 
         except TypeError:
             print("TypeError for ", parsed)
