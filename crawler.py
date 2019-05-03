@@ -144,7 +144,7 @@ class Crawler:
         if parsed.scheme not in set(["http", "https"]):
             return False
 
-        #check duplicate links with variance of http vs. https
+        #check duplicate links with variance of http vs. https ()
         # if url[:5] == "http:":
         #     if self.url_dict[url[4:]] > 0:
         #         return False
