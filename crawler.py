@@ -28,6 +28,13 @@ class Crawler:
         self.frontier = frontier
         self.corpus = Corpus()
 
+    def write_to_file(self, filename, header, contents):
+        f = open(filename, "w")
+        f.write(header)
+        f.write(contents)
+        f.write("\n\n")
+        f.close()
+
     def start_crawling(self):
         """
         This method starts the crawling process which is scraping urls from the next available link in frontier and adding
@@ -36,7 +43,7 @@ class Crawler:
         while self.frontier.has_next_url():
             url = self.frontier.get_next_url()
             validURLs.append(url)
-            #logger.info("Fetching URL %s ... Fetched: %s, Queue size: %s", url, self.frontier.fetched, len(self.frontier))
+            logger.info("Fetching URL %s ... Fetched: %s, Queue size: %s", url, self.frontier.fetched, len(self.frontier))
             url_data = self.fetch_url(url)
 
             for next_link in self.extract_next_links(url_data):
@@ -44,11 +51,16 @@ class Crawler:
                 if self.corpus.get_file_name(next_link) is not None:
                     if self.is_valid(next_link):
                         self.frontier.add_url(next_link)
+        self.write_to_file("subdomains.txt", "Subdomains visited:\n", str(subdomainDict))
+        self.write_to_file("mostvalid.txt", "Page with most valid:\n", str(Maxlink))
+        self.write_to_file("downloadedURLS.txt", "List of downloaded URLs:\n", str(validURLs))
+        self.write_to_file("traps.txt", "List of identified traps:\n", str(invalidURLs))
 
-        print(Maxlink)
-        print(validURLs)
-        print(invalidURLs)
-        print(subdomainDict)
+
+        #print(Maxlink)
+        #print(validURLs)
+        # print(invalidURLs)
+        # print(subdomainDict)
 
     def fetch_url(self, url):
         """
@@ -154,9 +166,6 @@ class Crawler:
         if freq > 15:
             invalidURLs.append(url)
             return False
-
-        # if "?" in url or "&" in url or ".ff" in url:
-        #     return False
 
         try:
             return ".ics.uci.edu" in parsed.hostname \
