@@ -7,6 +7,10 @@ import lxml.html
 from collections import Counter
 from bs4 import BeautifulSoup
 
+from lxml import etree
+from io import StringIO, BytesIO
+import collections
+
 logger = logging.getLogger(__name__)
 
 class Crawler:
@@ -16,6 +20,7 @@ class Crawler:
     """
 
     def __init__(self, frontier):
+        self.url_dict = collections.defaultdict(int)
         self.frontier = frontier
         self.corpus = Corpus()
 
@@ -69,6 +74,10 @@ class Crawler:
         #print(url_data)
         return url_data
 
+    def make_links_absolute(soup, url):
+        for tag in soup.findAll('a', href=True):
+            tag['href'] = urljoin(url, tag['href'])
+
     def extract_next_links(self, url_data):
         """
         The url_data coming from the fetch_url method will be given as a parameter to this method. url_data contains the
@@ -85,42 +94,37 @@ class Crawler:
         soup = BeautifulSoup(url_data["content"], "lxml")
         tags = soup.find_all('a')
 
+        # for tag in soup.findAll('a', href=True):
+        #     tag['href'] = urljoin(url_data["url"], tag['href'])
+
         for tag in tags:
+
             link = tag.get('href')
             if type(link) != type(None):
+                link = urljoin(url_data["url"], link)
+                #check for links not starting with http or / then adds base url with additional backslash to link
+                # if len(link) > 0 and link[0] != "h":
+                #     link = urljoin(url_data["url"], link)
+
                 # if current link is relative then add base url to it (relative = /blah instead of having proper protocol)
-                if len(link) > 0 and link[0] == "/":
-                    link = urljoin(url_data["url"], link)
+                # if len(link) > 0 and link[0] == "/":
+                #     link = urljoin(url_data["url"], link)
                     # if link[-1] == "/":
                     #     link = url_data["url"] + link[:-1]
                     # else:
                     #     link = url_data["url"] + link
 
                 #remove backslash from end of link
-                if len(link) > 0 and link[-1] == "/":
-                    link = link[:-1]
+                # if len(link) > 0 and link[-1] == "/":
+                #     link = link[:-1]
 
-                #check for links not starting with http or / then adds base url with additional backslash to link
-                if len(link) > 0 and link[0] != "h":
-                    link = urljoin(url_data["url"], link)
-
+                # print(link, end = " ")
+                # if(self.is_valid(link)):
+                #     print("valid")
+                # print()
                 outputLinks.append(link)
-
-
-
-
-        # domain = lxml.html.fromstring(url_data["content"])
-        # for l in domain.xpath('//a/@href'):
-        #     outputLinks.append(l)
-
-        # for link in outputLinks:
-        #     if len(link) > 0 and link[0] == "/":
-        #         #print(link)
-        #         link = "http://www.ics.uci.edu" + link
-        #         outputLinks.append(link)
-        
-        # print(outputLinks)
         return outputLinks
+
 
     def is_valid(self, url):
         """
@@ -128,28 +132,52 @@ class Crawler:
         filter out crawler traps. Duplicated urls will be taken care of by frontier. You don't need to check for duplication
         in this method
         """
-        splitted = url.split('/')
-        cnt = Counter(splitted)
-        for x in cnt:
-            if cnt[x] > 1:
-                return False
+        # splitted = url.split('/')
+        # cnt = Counter(splitted)
+        # for x in cnt:
+        #     print(x)
+        #     if cnt[x] > 1:
+        #         return False
+
+        #=======================================
         parsed = urlparse(url)
-        #print(parsed)
         if parsed.scheme not in set(["http", "https"]):
             return False
+
+        #check duplicate links with variance of http vs. https
+        # if url[:5] == "http:":
+        #     if self.url_dict[url[4:]] > 0:
+        #         return False
+        #     else:
+        #         self.url_dict[url[4:]] += 1
+        # elif url[:5] == "https":
+        #     if self.url_dict[url[5:]] > 0:
+        #         return False
+        #     else:
+        #         self.url_dict[url[5:]] += 1
+
+        # if parsed.netloc == "calendar.ics.uci.edu":
+        #     return False
+
+        paths_split = parsed.path.split("/")
+        word, freq = Counter(paths_split).most_common(1)[0]
+        if freq > 10:
+            return False
+
+        # if "?" in url or "&" in url or ".ff" in url:
+        #     return False
+
         try:
             return ".ics.uci.edu" in parsed.hostname \
-                   and not re.match(r".*\.(css|js|bmp|gif|jpe?g|ico" + r"|png|tiff?|mid|mp2|mp3|mp4" \
-                                    + r"|wav|avi|mov|mpeg|ram|m4v|mkv|ogg|ogv|pdf" \
-                                    + r"|ps|eps|tex|ppt|pptx|doc|docx|xls|xlsx|names|data|dat|exe|bz2|tar|msi|bin|7z|psd|dmg|iso|epub|dll|cnf|tgz|sha1" \
-                                    + r"|thmx|mso|arff|rtf|jar|csv" \
-                                    + r"|rm|smil|wmv|swf|wma|zip|rar|gz|pdf)$", parsed.path.lower()) \
-                   and parsed.query =='' \
-                   and not re.match(r"^.*?(/.+?/).*?\1.*$|^.*?/(.+?/)\2.*$", url) \
-                   and not re.match(r"^.*(/misc|/sites|/all|/themes|/modules|/profiles|/css|/field|/node|/theme){3}.*$", url) \
-                   and not re.match(r"^.*calendar.*$", url) 
+                   and not re.match(".*\.(css|js|bmp|gif|jpe?g|ico" + "|png|tiff?|mid|mp2|mp3|mp4" \
+                                    + "|wav|avi|mov|mpeg|ram|m4v|mkv|ogg|ogv|pdf" \
+                                    + "|ps|eps|tex|ppt|pptx|doc|docx|xls|xlsx|names|data|dat|exe|bz2|tar|msi|bin|7z|psd|dmg|iso|epub|dll|cnf|tgz|sha1" \
+                                    + "|thmx|mso|arff|rtf|jar|csv" \
+                                    + "|rm|smil|wmv|swf|wma|zip|rar|gz|pdf)$", parsed.path.lower()) #\
+                   # and not re.match(r"^.*?(/.+?/).*?\1.*$|^.*?/(.+?/)\2.*$", url) \
+                   # and not re.match(r"^.*(/misc|/sites|/all|/themes|/modules|/profiles|/css|/field|/node|/theme){3}.*$", url) \
+                   # and not re.match(r"^.*calendar.*$", parsed.path.lower()) 
 
         except TypeError:
             print("TypeError for ", parsed)
             return False
-
