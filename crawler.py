@@ -31,8 +31,15 @@ class Crawler:
     def write_to_file(self, filename, header, contents):
         f = open(filename, "w")
         f.write(header)
-        f.write(contents)
-        f.write("\n\n")
+        print(type(contents))
+        if type(contents) is list:
+            for item in contents:
+                f.write(str(item) + "\n")
+        elif type(contents) is tuple:
+            f.write(str(contents[0]) + " " + str(contents[1]) + "\n")
+        else:
+            for key,value in contents.items():
+                f.write(str(key) + ": " + str(value) + "\n")
         f.close()
 
     def start_crawling(self):
@@ -51,16 +58,11 @@ class Crawler:
                 if self.corpus.get_file_name(next_link) is not None:
                     if self.is_valid(next_link):
                         self.frontier.add_url(next_link)
-        self.write_to_file("subdomains.txt", "Subdomains visited:\n", str(subdomainDict))
-        self.write_to_file("mostvalid.txt", "Page with most valid:\n", str(Maxlink))
-        self.write_to_file("downloadedURLS.txt", "List of downloaded URLs:\n", str(validURLs))
-        self.write_to_file("traps.txt", "List of identified traps:\n", str(invalidURLs))
 
-
-        #print(Maxlink)
-        #print(validURLs)
-        # print(invalidURLs)
-        # print(subdomainDict)
+        self.write_to_file("subdomains.txt", "Subdomains visited:\n\n", subdomainDict)
+        self.write_to_file("mostvalid.txt", "Page with most valid URLs:\n\n", Maxlink)
+        self.write_to_file("downloadedURLS.txt", "List of downloaded URLs:\n\n", validURLs)
+        self.write_to_file("traps.txt", "List of identified traps:\n\n", invalidURLs)
 
     def fetch_url(self, url):
         """
@@ -70,7 +72,6 @@ class Crawler:
         :return: a dictionary containing the url, content and the size of the content. If the url does not
         exist in the corpus, a dictionary with content set to None and size set to 0 can be returned.
         """
-        #print(url)
         url_data = {
             "url": url,
             "content": None,
@@ -78,7 +79,6 @@ class Crawler:
         }
 
         file = self.corpus.get_file_name(url) # Get URL from the corpus
-        #print(file)
         if file == None:
             return url_data
 
@@ -93,7 +93,6 @@ class Crawler:
             url_data["content"] = content
             url_data['size'] = s
 
-        #print(url_data)
         return url_data
 
     def make_links_absolute(soup, url):
