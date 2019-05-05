@@ -1,3 +1,7 @@
+#Animesh Agrawal    animesha    50254531
+#Micheal Kirk       kirkmc      49847974
+#Rachel Lam         rslam       24554220
+
 import logging
 import re
 from urllib.parse import urlparse
@@ -12,11 +16,6 @@ from io import StringIO, BytesIO
 import collections
 
 logger = logging.getLogger(__name__)
-DynamicDICT = collections.defaultdict(int)
-subdomainDict = collections.defaultdict(int)
-Maxlink = ('', 0)
-validURLs = []
-invalidURLs = []
 class Crawler:
     """
     This class is responsible for scraping urls from the next available link in frontier and adding the scraped links to
@@ -26,12 +25,16 @@ class Crawler:
     def __init__(self, frontier):
         self.url_dict = collections.defaultdict(int)
         self.frontier = frontier
+        self.DynamicDICT = collections.defaultdict(int)
+        self.subdomainDict = collections.defaultdict(int)
+        self.Maxlink = ('', 0)
+        self.validURLs = []
+        self.invalidURLs = []
         self.corpus = Corpus()
 
     def write_to_file(self, filename, header, contents):
         f = open(filename, "w")
         f.write(header)
-        print(type(contents))
         if type(contents) is list:
             for item in contents:
                 f.write(str(item) + "\n")
@@ -49,20 +52,21 @@ class Crawler:
         """
         while self.frontier.has_next_url():
             url = self.frontier.get_next_url()
-            validURLs.append(url)
+            self.validURLs.append(url)
             logger.info("Fetching URL %s ... Fetched: %s, Queue size: %s", url, self.frontier.fetched, len(self.frontier))
             url_data = self.fetch_url(url)
 
             for next_link in self.extract_next_links(url_data):
-                #print(next_link)
                 if self.corpus.get_file_name(next_link) is not None:
                     if self.is_valid(next_link):
                         self.frontier.add_url(next_link)
 
-        self.write_to_file("subdomains.txt", "Subdomains visited:\n\n", subdomainDict)
-        self.write_to_file("mostvalid.txt", "Page with most valid URLs:\n\n", Maxlink)
-        self.write_to_file("downloadedURLS.txt", "List of downloaded URLs:\n\n", validURLs)
-        self.write_to_file("traps.txt", "List of identified traps:\n\n", invalidURLs)
+
+        ## Writing the statistics to different text files
+        self.write_to_file("subdomains.txt", "Subdomains visited:\n\n", self.subdomainDict) # Subdomain : Number of links under that domain
+        self.write_to_file("mostvalid.txt", "Page with most valid URLs:\n\n", self.Maxlink) # Link : Number of links on the page
+        self.write_to_file("downloadedURLS.txt", "List of downloaded URLs:\n\n", self.validURLs) # All crawled links
+        self.write_to_file("traps.txt", "List of identified traps:\n\n", self.invalidURLs) # All the links which were considered as traps
 
     def fetch_url(self, url):
         """
@@ -87,17 +91,13 @@ class Crawler:
         except(Exception):
             return url_data
         else:
-            content = f.read()
-            s = len(content)
+            content = f.read() # reading the contents
+            s = len(content) # Size of the file
             url_data["url"] = url
             url_data["content"] = content
             url_data['size'] = s
 
         return url_data
-
-    def make_links_absolute(soup, url):
-        for tag in soup.findAll('a', href=True):
-            tag['href'] = urljoin(url, tag['href'])
 
     def extract_next_links(self, url_data):
         """
@@ -112,18 +112,17 @@ class Crawler:
         
         outputLinks = []
 
-        soup = BeautifulSoup(url_data["content"], "lxml")
-        tags = soup.find_all('a')
+        soup = BeautifulSoup(url_data["content"], "lxml") # parsing the contents of page
+        tags = soup.find_all('a') # extracting a tags 
         for tag in tags:
-            link = tag.get('href')
-            if type(link) != type(None):
-                link = urljoin(url_data["url"], link)
-                outputLinks.append(link)
+            link = tag.get('href') # Extracting links in hrefs
+            if type(link) != type(None): 
+                link = urljoin(url_data["url"], link) #converting all links to absolute links
+                outputLinks.append(link) # Adding the link to output link list to return thr file
 
-        count = len(outputLinks)
-        global Maxlink
-        if Maxlink[1] < count:
-            Maxlink = (url_data["url"], count)
+        count = len(outputLinks) # statistics to check page with maximum links
+        if self.Maxlink[1] < count:
+            self.Maxlink = (url_data["url"], count)
 
         return outputLinks
 
@@ -135,36 +134,37 @@ class Crawler:
         in this method
         """
         parsed = urlparse(url)
+        if ".ics.uci.edu" in parsed.hostname: #makes sure we are only considering links in the ics.uci.edu subdomain 
 
-        subdomainDict[parsed.netloc] += 1
-        if parsed.scheme not in set(["http", "https"]):
-            return False
+            self.subdomainDict[parsed.netloc] += 1 # Number of links in a subdomain
+            if parsed.scheme not in set(["http", "https"]):
+                return False
 
 
-        static_portion = url.split('?')[0]
+            static_portion = url.split('?')[0] #extracting the static portion from a dynamic URL
 
-        DynamicDICT[static_portion] += 1
-        if DynamicDICT[static_portion] > 1000:
-            invalidURLs.append(url)
-            return False
+            self.DynamicDICT[static_portion] += 1
+            if self.DynamicDICT[static_portion] > 1000: #removes a dynamic URL if the static portion is repeated for a 1000 times
+                self.invalidURLs.append(url)
+                return False
 
-        #check duplicate links with variance of http vs. https ()
-        # if url[:5] == "http:":
-        #     if self.url_dict[url[4:]] > 0:
-        #         return False
-        #     else:
-        #         self.url_dict[url[4:]] += 1
-        # elif url[:5] == "https":
-        #     if self.url_dict[url[5:]] > 0:
-        #         return False
-        #     else:
-        #         self.url_dict[url[5:]] += 1
+            #check duplicate links with variance of http vs. https ()
+            # if url[:5] == "http:":
+            #     if self.url_dict[url[4:]] > 0:
+            #         return False
+            #     else:
+            #         self.url_dict[url[4:]] += 1
+            # elif url[:5] == "https":
+            #     if self.url_dict[url[5:]] > 0:
+            #         return False
+            #     else:
+            #         self.url_dict[url[5:]] += 1
 
-        paths_split = parsed.path.split("/")
-        word, freq = Counter(paths_split).most_common(1)[0]
-        if freq > 15:
-            invalidURLs.append(url)
-            return False
+            paths_split = parsed.path.split("/")
+            word, freq = Counter(paths_split).most_common(1)[0] #checks for repeating directories in a link to check for traps
+            if freq > 12:
+                self.invalidURLs.append(url)
+                return False
 
         try:
             return ".ics.uci.edu" in parsed.hostname \

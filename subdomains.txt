@@ -1,9 +1,7 @@
 Subdomains visited:
 
-www.ics.uci.edu: 47943
-ics.uci.edu: 12
+www.ics.uci.edu: 47479
 calendar.ics.uci.edu: 1689
-www.uci.edu: 1756
 support.ics.uci.edu: 2
 duttgroup.ics.uci.edu: 81873
 wildhog.ics.uci.edu:9090: 8
@@ -13,7 +11,7 @@ asterix.ics.uci.edu: 12
 radicle.ics.uci.edu: 29
 sherlock.ics.uci.edu: 49
 sparcfire.ics.uci.edu: 15
-cml.ics.uci.edu: 882
+cml.ics.uci.edu: 832
 map125.ics.uci.edu: 1
 sli.ics.uci.edu: 7836
 graphmod.ics.uci.edu: 2455
@@ -29,8 +27,8 @@ ibook.ics.uci.edu: 8
 motifmap.ics.uci.edu: 16
 students.ics.uci.edu: 6
 www-db.ics.uci.edu: 101
-mlearn.ics.uci.edu: 272
-archive.ics.uci.edu: 2630
+mlearn.ics.uci.edu: 247
+archive.ics.uci.edu: 2605
 mapgrid.ics.uci.edu: 1
 hombao.ics.uci.edu: 2
 fr.ics.uci.edu: 7
